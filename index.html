@@ -5,7 +5,7 @@
   <title>Tolminska Korita • Camper Monitor</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚐</text></svg>">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-light: #f5f7fa;
@@ -208,13 +208,19 @@
     const btn = document.getElementById("reportBtn");
     const time = document.getElementById("lastTime");
     const muteBtn = document.getElementById("muteBtn");
+    const themeSwitch = document.getElementById("themeSwitch");
 
     const audio = new Audio('notification.mp3');
     audio.preload = 'auto';
 
-    // Load saved mute state
+    // Load saved mute state (default false)
     let isMuted = localStorage.getItem('muteState') === 'true';
     updateMuteButton();
+
+    // Load saved dark mode state (default false)
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) document.body.classList.add('dark');
+    updateThemeUI();
 
     muteBtn.addEventListener('click', () => {
       isMuted = !isMuted;
@@ -224,6 +230,21 @@
 
     function updateMuteButton() {
       muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    themeSwitch.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      if (isDarkMode) {
+        document.body.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark');
+      }
+      localStorage.setItem('darkMode', isDarkMode);
+      updateThemeUI();
+    });
+
+    function updateThemeUI() {
+      themeSwitch.textContent = document.body.classList.contains("dark") ? "Dark Mode" : "Light Mode";
     }
 
     function fmt(d) {
@@ -262,37 +283,15 @@
       ref.set({ timestamp: now });
     });
 
-    // Listen for Firebase updates and play sound if unmuted
     ref.on("value", (snap) => {
       const val = snap.val();
       if (val && val.timestamp) {
         updateUI(val.timestamp);
         if (!isMuted) {
-          audio.play().catch(() => {
-            // Prevent errors if play is blocked by browser
-          });
+          audio.play().catch(() => {});
         }
       }
     });
-
-    // Theme toggle logic
-    const themeSwitch = document.getElementById("themeSwitch");
-
-    function updateThemeUI() {
-      if (document.body.classList.contains("dark")) {
-        themeSwitch.textContent = "Dark Mode";
-      } else {
-        themeSwitch.textContent = "Light Mode";
-      }
-    }
-
-    themeSwitch.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-      updateThemeUI();
-    });
-
-    // Initialize UI
-    updateThemeUI();
   </script>
 </body>
 </html>
