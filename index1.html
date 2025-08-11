@@ -5,7 +5,7 @@
   <title>Tolminska Korita • Camper Monitor</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚐</text></svg>">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-light: #f5f7fa;
@@ -62,7 +62,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3rem;
+      gap: 1.5rem;
       padding-bottom: 3rem;
     }
     #reportBtn {
@@ -89,6 +89,21 @@
       display: block;
     }
     #reportBtn:hover {
+      background: #3a6de0;
+    }
+    #muteBtn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.4rem 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.3s;
+      user-select: none;
+    }
+    #muteBtn:hover {
       background: #3a6de0;
     }
     .squish {
@@ -163,8 +178,9 @@
   </header>
   <main>
     <button id="reportBtn" aria-label="Report camper arrival on P2">
-      <img src="https://cdn-icons-png.flaticon.com/512/1178/1178949.png" alt="Camper van icon">
+      <img src="https://cdn-icons-png.flaticon.com/512/1178/1178949.png" alt="Camper van icon" />
     </button>
+    <button id="muteBtn" aria-label="Toggle notification sound">Mute</button>
     <div class="timestamp" id="lastTime">--:--</div>
   </main>
   <footer>© Miha Kenda</footer>
@@ -191,6 +207,45 @@
 
     const btn = document.getElementById("reportBtn");
     const time = document.getElementById("lastTime");
+    const muteBtn = document.getElementById("muteBtn");
+    const themeSwitch = document.getElementById("themeSwitch");
+
+    const audio = new Audio('notification.mp3');
+    audio.preload = 'auto';
+
+    // Load saved mute state (default false)
+    let isMuted = localStorage.getItem('muteState') === 'true';
+    updateMuteButton();
+
+    // Load saved dark mode state (default false)
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) document.body.classList.add('dark');
+    updateThemeUI();
+
+    muteBtn.addEventListener('click', () => {
+      isMuted = !isMuted;
+      localStorage.setItem('muteState', isMuted);
+      updateMuteButton();
+    });
+
+    function updateMuteButton() {
+      muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    themeSwitch.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      if (isDarkMode) {
+        document.body.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark');
+      }
+      localStorage.setItem('darkMode', isDarkMode);
+      updateThemeUI();
+    });
+
+    function updateThemeUI() {
+      themeSwitch.textContent = document.body.classList.contains("dark") ? "Light Mode" : "Dark Mode";
+    }
 
     function fmt(d) {
       return d.toLocaleString("sl-SI", {
@@ -230,47 +285,13 @@
 
     ref.on("value", (snap) => {
       const val = snap.val();
-      if (val && val.timestamp) updateUI(val.timestamp);
-    });
-
-    // THEME SWITCHER with persistence and default dark mode
-    const switchBtn = document.getElementById("themeSwitch");
-
-    // Load saved theme or set default to dark
-    let savedTheme = localStorage.getItem("theme");
-    if (!savedTheme) {
-      document.body.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      switchBtn.textContent = "Light Mode";
-    } else {
-      if (savedTheme === "dark") {
-        document.body.classList.add("dark");
-        switchBtn.textContent = "Light Mode";
-      } else {
-        document.body.classList.remove("dark");
-        switchBtn.textContent = "Dark Mode";
-      }
-    }
-
-    switchBtn.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-      if (document.body.classList.contains("dark")) {
-        localStorage.setItem("theme", "dark");
-        switchBtn.textContent = "Light Mode";
-      } else {
-        localStorage.setItem("theme", "light");
-        switchBtn.textContent = "Dark Mode";
+      if (val && val.timestamp) {
+        updateUI(val.timestamp);
+        if (!isMuted) {
+          audio.play().catch(() => {});
+        }
       }
     });
-  </script>
-
-  <script type="text/javascript">
-    (function (d, t) {
-      var g = d.createElement(t),
-        s = d.getElementsByTagName(t)[0];
-      g.src = "https://cdn.pushalert.co/integrate_eda49e2ff81370b235e0fe1844640107.js";
-      s.parentNode.insertBefore(g, s);
-    })(document, "script");
   </script>
 </body>
 </html>
